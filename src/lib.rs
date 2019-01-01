@@ -18,8 +18,6 @@
 // ------------------------------------------------------------------------------------------------
 // Data types
 
-pub trait Coproduct {}
-
 pub auto trait NotEq {}
 impl<X> !NotEq for (X, X) {}
 
@@ -82,26 +80,18 @@ pub struct CoproductSingleton<L> {
     left: L,
 }
 
-impl<L> Coproduct for CoproductSingleton<L> {}
-
 impl<L> Contains<L> for CoproductSingleton<L> {
     fn wrap(left: L) -> CoproductSingleton<L> {
         CoproductSingleton { left }
     }
 }
 
-pub enum CoproductPair<L, R>
-where
-    R: Coproduct,
-{
+pub enum CoproductPair<L, R> {
     Left(L),
     Right(R),
 }
 
-impl<L, R> CoproductPair<L, R>
-where
-    R: Coproduct,
-{
+impl<L, R> CoproductPair<L, R> {
     pub fn new_left(left: L) -> CoproductPair<L, R> {
         CoproductPair::Left(left)
     }
@@ -110,12 +100,7 @@ where
     }
 }
 
-impl<L, R> Coproduct for CoproductPair<L, R> where R: Coproduct {}
-
-impl<L, R> Contains<L> for CoproductPair<L, R>
-where
-    R: Coproduct,
-{
+impl<L, R> Contains<L> for CoproductPair<L, R> {
     fn wrap(left: L) -> CoproductPair<L, R> {
         CoproductPair::Left(left)
     }
@@ -123,7 +108,7 @@ where
 
 impl<X, L, R> Contains<X> for CoproductPair<L, R>
 where
-    R: Contains<X> + Coproduct,
+    R: Contains<X>,
     (X, L): NotEq,
 {
     fn wrap(x: X) -> CoproductPair<L, R> {
@@ -153,7 +138,7 @@ where
 impl<L, R> Evaluate for CoproductPair<L, R>
 where
     L: Evaluate,
-    R: Evaluate + Coproduct,
+    R: Evaluate,
 {
     fn evaluate<V: Result>(&self) -> V {
         match self {
@@ -238,7 +223,6 @@ impl<L, R> Evaluate<u64> for Subtract<L, R> where L: Evaluate<u64>, R: Evaluate<
 mod eval_tests {
     use super::*;
 
-    /*
     #[test]
     fn can_evaluate_constant() {
         let one: Constant = Constant::new(1);
@@ -253,6 +237,7 @@ mod eval_tests {
         assert_eq!(add.evaluate::<u64>(), 3);
     }
 
+    /*
     #[test]
     fn can_evaluate_add3() {
         let one: Constant = Constant::new(1);
