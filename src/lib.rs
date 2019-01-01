@@ -161,29 +161,20 @@ where
 // Expr
 
 pub type Sig<E> = Coproduct![Constant, Add<E>];
-
-pub struct Expr {
-    pub sig: Sig<Expr>,
-}
-
-impl Expr {
-    pub fn new(sig: Sig<Expr>) -> Expr {
-        Expr { sig }
-    }
-}
+pub struct Expr(Sig<Expr>);
 
 impl<X> Contains<X> for Expr
 where
     Sig<Expr>: Contains<X>,
 {
     fn wrap(x: X) -> Expr {
-        Expr::new(Sig::<Expr>::wrap(x))
+        Expr(Sig::<Expr>::wrap(x))
     }
 }
 
 impl Evaluate for Expr {
     fn evaluate<V: Result>(&self) -> V {
-        self.sig.evaluate()
+        self.0.evaluate()
     }
 }
 
