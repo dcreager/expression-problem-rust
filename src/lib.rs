@@ -13,47 +13,56 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
-use std::marker::PhantomData;
+#![feature(optin_builtin_traits, specialization)]
 
 // ------------------------------------------------------------------------------------------------
 // Data types
 
-pub struct Constant<E> {
+pub trait Coproduct {}
+
+pub auto trait NotEq {}
+impl<X> !NotEq for (X, X) {}
+
+pub trait Contains<E> {
+    fn wrap(value: E) -> Self;
+}
+
+pub struct Constant {
     pub value: u64,
-    phantom: PhantomData<E>,
 }
 
-impl<E> Constant<E> {
-    fn new(value: u64) -> Constant<E> {
-        Constant {
-            value,
-            phantom: PhantomData,
-        }
+impl Constant {
+    fn new(value: u64) -> Constant {
+        Constant { value }
     }
 }
 
-pub fn constant<E>(value: u64) -> Constant<E> {
-    Constant::new(value)
+pub fn constant<E: Contains<Constant>>(value: u64) -> E {
+    E::wrap(Constant::new(value))
 }
 
-impl<E> From<u64> for Constant<E> {
-    fn from(value: u64) -> Constant<E> {
-        constant(value)
+impl From<u64> for Constant {
+    fn from(value: u64) -> Constant {
+        Constant::new(value)
     }
 }
 
-pub struct Add<L, R> {
-    pub lhs: Box<L>,
-    pub rhs: Box<R>,
+pub struct Add<E> {
+    pub lhs: Box<E>,
+    pub rhs: Box<E>,
 }
 
-impl<L, R> Add<L, R> {
-    pub fn new(lhs: L, rhs: R) -> Add<L, R> {
+impl<E> Add<E> {
+    pub fn new(lhs: E, rhs: E) -> Add<E> {
         Add {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         }
     }
+}
+
+pub fn add<E: Contains<Add<E>>>(lhs: E, rhs: E) -> E {
+    E::wrap(Add::new(lhs, rhs))
 }
 
 /*
@@ -69,33 +78,58 @@ where
 
 // ------------------------------------------------------------------------------------------------
 
-pub enum Coproduct<L, R> {
+pub struct CoproductSingleton<L> {
+    left: L,
+}
+
+impl<L> Coproduct for CoproductSingleton<L> {}
+
+impl<L> Contains<L> for CoproductSingleton<L> {
+    fn wrap(left: L) -> CoproductSingleton<L> {
+        CoproductSingleton { left }
+    }
+}
+
+pub enum CoproductPair<L, R>
+where
+    R: Coproduct,
+{
     Left(L),
     Right(R),
 }
 
-impl<L, R> Coproduct<L, R> {
-    pub fn new_left(left: L) -> Coproduct<L, R> {
-        Coproduct::Left(left)
+impl<L, R> CoproductPair<L, R>
+where
+    R: Coproduct,
+{
+    pub fn new_left(left: L) -> CoproductPair<L, R> {
+        CoproductPair::Left(left)
     }
-    pub fn new_right(right: R) -> Coproduct<L, R> {
-        Coproduct::Right(right)
-    }
-}
-
-/*
-impl<L, R> From<L> for Coproduct<L, R> {
-    fn from(left: L) -> Coproduct<L, R> {
-        Coproduct::new_left(left)
+    pub fn new_right(right: R) -> CoproductPair<L, R> {
+        CoproductPair::Right(right)
     }
 }
 
-impl<L, R> From<R> for Coproduct<L, R> {
-    fn from(right: R) -> Coproduct<L, R> {
-        Coproduct::new_right(right)
+impl<L, R> Coproduct for CoproductPair<L, R> where R: Coproduct {}
+
+impl<L, R> Contains<L> for CoproductPair<L, R>
+where
+    R: Coproduct,
+{
+    fn wrap(left: L) -> CoproductPair<L, R> {
+        CoproductPair::Left(left)
     }
 }
-*/
+
+impl<X, L, R> Contains<X> for CoproductPair<L, R>
+where
+    R: Contains<X> + Coproduct,
+    (X, L): NotEq,
+{
+    fn wrap(x: X) -> CoproductPair<L, R> {
+        CoproductPair::Right(R::wrap(x))
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
 // Evaluate
@@ -107,29 +141,37 @@ pub trait Evaluate {
     fn evaluate<V: Result>(&self) -> V;
 }
 
-impl<L, R> Evaluate for Coproduct<L, R>
+impl<L> Evaluate for CoproductSingleton<L>
 where
     L: Evaluate,
-    R: Evaluate,
+{
+    fn evaluate<V: Result>(&self) -> V {
+        self.left.evaluate()
+    }
+}
+
+impl<L, R> Evaluate for CoproductPair<L, R>
+where
+    L: Evaluate,
+    R: Evaluate + Coproduct,
 {
     fn evaluate<V: Result>(&self) -> V {
         match self {
-            Coproduct::Left(l) => l.evaluate(),
-            Coproduct::Right(r) => r.evaluate(),
+            CoproductPair::Left(l) => l.evaluate(),
+            CoproductPair::Right(r) => r.evaluate(),
         }
     }
 }
 
-impl<E> Evaluate for Constant<E> {
+impl Evaluate for Constant {
     fn evaluate<V: Result>(&self) -> V {
         V::from(self.value)
     }
 }
 
-impl<L, R> Evaluate for Add<L, R>
+impl<E> Evaluate for Add<E>
 where
-    L: Evaluate,
-    R: Evaluate,
+    E: Evaluate,
 {
     fn evaluate<V: Result>(&self) -> V {
         self.lhs.evaluate::<V>() + self.rhs.evaluate::<V>()
@@ -139,7 +181,7 @@ where
 // ------------------------------------------------------------------------------------------------
 // Expr
 
-pub type Sig<E> = Coproduct<Constant<E>, Add<E, E>>;
+pub type Sig<E> = CoproductPair<Constant, CoproductSingleton<Add<E>>>;
 
 pub struct Expr {
     pub sig: Sig<Expr>,
@@ -148,6 +190,15 @@ pub struct Expr {
 impl Expr {
     pub fn new(sig: Sig<Expr>) -> Expr {
         Expr { sig }
+    }
+}
+
+impl<X> Contains<X> for Expr
+where
+    Sig<Expr>: Contains<X>,
+{
+    fn wrap(x: X) -> Expr {
+        Expr::new(Sig::<Expr>::wrap(x))
     }
 }
 
@@ -187,50 +238,46 @@ impl<L, R> Evaluate<u64> for Subtract<L, R> where L: Evaluate<u64>, R: Evaluate<
 mod eval_tests {
     use super::*;
 
+    /*
     #[test]
     fn can_evaluate_constant() {
-        let one: Constant<u64> = constant(1);
+        let one: Constant = Constant::new(1);
         assert_eq!(one.evaluate::<u64>(), 1);
     }
 
     #[test]
     fn can_evaluate_add() {
-        let one: Constant<u64> = constant(1);
-        let two: Constant<u64> = constant(2);
+        let one: Constant = Constant::new(1);
+        let two: Constant = Constant::new(2);
         let add = Add::new(one, two);
         assert_eq!(add.evaluate::<u64>(), 3);
     }
 
     #[test]
     fn can_evaluate_add3() {
-        let one: Constant<u64> = constant(1);
-        let two: Constant<u64> = constant(2);
-        let three: Constant<u64> = constant(3);
+        let one: Constant = Constant::new(1);
+        let two: Constant = Constant::new(2);
+        let three: Constant = Constant::new(3);
         let add = Add::new(one, Add::new(two, three));
         assert_eq!(add.evaluate::<u64>(), 6);
     }
+    */
 
     #[test]
     fn can_evaluate_expr_constant() {
-        let one = Expr::new(Coproduct::new_left(constant(1)));
+        let one: Expr = constant(1);
         assert_eq!(one.evaluate::<u64>(), 1);
     }
 
     #[test]
     fn can_evaluate_expr_add() {
-        let add: Expr = Expr::from(Add::new(constant(1), constant(2)));
+        let add: Expr = add(constant(1), constant(2));
         assert_eq!(add.evaluate::<u64>(), 3);
     }
 
     #[test]
     fn can_evaluate_expr_add3() {
-        let one = Expr::new(Coproduct::new_left(constant(1)));
-        let two = Expr::new(Coproduct::new_left(constant(2)));
-        let three = Expr::new(Coproduct::new_left(constant(3)));
-        let add = Expr::new(Coproduct::new_right(Add::new(
-            one,
-            Expr::new(Coproduct::new_right(Add::new(two, three))),
-        )));
+        let add: Expr = add(constant(1), add(constant(2), constant(3)));
         assert_eq!(add.evaluate::<u64>(), 6);
     }
 
