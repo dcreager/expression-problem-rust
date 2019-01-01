@@ -63,17 +63,6 @@ pub fn add<E: Contains<Add<E>>>(lhs: E, rhs: E) -> E {
     E::wrap(Add::new(lhs, rhs))
 }
 
-/*
-impl<E> std::ops::Add for E
-where
-    E: From<Add<E, E>>,
-{
-    fn add(self, other: Self) -> Self {
-        Add::new(self, other)
-    }
-}
-*/
-
 // ------------------------------------------------------------------------------------------------
 
 pub struct CoproductSingleton<L> {
@@ -114,6 +103,11 @@ where
     fn wrap(x: X) -> CoproductPair<L, R> {
         CoproductPair::Right(R::wrap(x))
     }
+}
+
+macro_rules! Coproduct {
+    { $A:ty } => { CoproductSingleton<$A> };
+    { $A:ty, $($B:ty),+ } => { CoproductPair<$A, Coproduct![$($B),+]> };
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -166,7 +160,7 @@ where
 // ------------------------------------------------------------------------------------------------
 // Expr
 
-pub type Sig<E> = CoproductPair<Constant, CoproductSingleton<Add<E>>>;
+pub type Sig<E> = Coproduct![Constant, Add<E>];
 
 pub struct Expr {
     pub sig: Sig<Expr>,
