@@ -21,12 +21,12 @@
 pub auto trait NotEq {}
 impl<X> !NotEq for (X, X) {}
 
-pub struct Constant {
+pub struct IntegerLiteral {
     pub value: i64,
 }
 
-pub fn constant<E: From<Constant>>(value: i64) -> E {
-    E::from(Constant { value })
+pub fn integer_literal<E: From<IntegerLiteral>>(value: i64) -> E {
+    E::from(IntegerLiteral { value })
 }
 
 pub struct Add<E> {
@@ -122,7 +122,7 @@ where
     }
 }
 
-impl Evaluate for Constant {
+impl Evaluate for IntegerLiteral {
     fn evaluate<V: Result>(&self) -> V {
         V::from(self.value)
     }
@@ -140,7 +140,7 @@ where
 // ------------------------------------------------------------------------------------------------
 // Expr
 
-pub type Sig<E> = Coproduct![Constant, Add<E>];
+pub type Sig<E> = Coproduct![IntegerLiteral, Add<E>];
 pub struct Expr(Sig<Expr>);
 
 impl<X> From<X> for Expr
@@ -189,15 +189,15 @@ mod eval_tests {
     use super::*;
 
     #[test]
-    fn can_evaluate_constant() {
-        let one: Constant = Constant { value: 1 };
+    fn can_evaluate_integer_literal() {
+        let one = IntegerLiteral { value: 1 };
         assert_eq!(one.evaluate::<i64>(), 1);
     }
 
     #[test]
     fn can_evaluate_add() {
-        let one: Constant = Constant { value: 1 };
-        let two: Constant = Constant { value: 2 };
+        let one = IntegerLiteral { value: 1 };
+        let two = IntegerLiteral { value: 2 };
         let add = Add {
             lhs: Box::new(one),
             rhs: Box::new(two),
@@ -208,9 +208,9 @@ mod eval_tests {
     /*
     #[test]
     fn can_evaluate_add3() {
-        let one: Constant = Constant { value: 1 };
-        let two: Constant = Constant { value: 2 };
-        let three: Constant = Constant { value: 3 };
+        let one = IntegerLiteral { value: 1 };
+        let two = IntegerLiteral { value: 2 };
+        let three = IntegerLiteral { value: 3 };
         let add = Add {
             lhs: Box::new(one),
             rhs: Box::new(Add {
@@ -223,28 +223,31 @@ mod eval_tests {
     */
 
     #[test]
-    fn can_evaluate_expr_constant() {
-        let one: Expr = constant(1);
+    fn can_evaluate_expr_integer_literal() {
+        let one: Expr = integer_literal(1);
         assert_eq!(one.evaluate::<i64>(), 1);
     }
 
     #[test]
     fn can_evaluate_expr_add() {
-        let add: Expr = add(constant(1), constant(2));
+        let add: Expr = add(integer_literal(1), integer_literal(2));
         assert_eq!(add.evaluate::<i64>(), 3);
     }
 
     #[test]
     fn can_evaluate_expr_add3() {
-        let add: Expr = add(constant(1), add(constant(2), constant(3)));
+        let add: Expr = add(
+            integer_literal(1),
+            add(integer_literal(2), integer_literal(3)),
+        );
         assert_eq!(add.evaluate::<i64>(), 6);
     }
 
     /*
     #[test]
     fn can_evaluate_subtract() {
-        let one = new_constant(1);
-        let two = new_constant(2);
+        let one = new_integer_literal(1);
+        let two = new_integer_literal(2);
         let sub = Subtract::new(two, one);
         assert_eq!(evaluate(sub), 1);
     }
