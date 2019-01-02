@@ -21,10 +21,6 @@
 pub auto trait NotEq {}
 impl<X> !NotEq for (X, X) {}
 
-pub trait Contains<E> {
-    fn wrap(value: E) -> Self;
-}
-
 pub struct Constant {
     pub value: u64,
 }
@@ -35,8 +31,8 @@ impl Constant {
     }
 }
 
-pub fn constant<E: Contains<Constant>>(value: u64) -> E {
-    E::wrap(Constant::new(value))
+pub fn constant<E: From<Constant>>(value: u64) -> E {
+    E::from(Constant::new(value))
 }
 
 impl From<u64> for Constant {
@@ -59,8 +55,8 @@ impl<E> Add<E> {
     }
 }
 
-pub fn add<E: Contains<Add<E>>>(lhs: E, rhs: E) -> E {
-    E::wrap(Add::new(lhs, rhs))
+pub fn add<E: From<Add<E>>>(lhs: E, rhs: E) -> E {
+    E::from(Add::new(lhs, rhs))
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -69,8 +65,8 @@ pub struct CoproductSingleton<L> {
     left: L,
 }
 
-impl<L> Contains<L> for CoproductSingleton<L> {
-    fn wrap(left: L) -> CoproductSingleton<L> {
+impl<L> From<L> for CoproductSingleton<L> {
+    fn from(left: L) -> CoproductSingleton<L> {
         CoproductSingleton { left }
     }
 }
@@ -89,19 +85,20 @@ impl<L, R> CoproductPair<L, R> {
     }
 }
 
-impl<L, R> Contains<L> for CoproductPair<L, R> {
-    fn wrap(left: L) -> CoproductPair<L, R> {
+impl<L, R> From<L> for CoproductPair<L, R> {
+    fn from(left: L) -> CoproductPair<L, R> {
         CoproductPair::Left(left)
     }
 }
 
-impl<X, L, R> Contains<X> for CoproductPair<L, R>
+impl<X, L, R> From<X> for CoproductPair<L, R>
 where
-    R: Contains<X>,
+    R: From<X>,
     (X, L): NotEq,
+    (X, Self): NotEq,
 {
-    fn wrap(x: X) -> CoproductPair<L, R> {
-        CoproductPair::Right(R::wrap(x))
+    fn from(x: X) -> CoproductPair<L, R> {
+        CoproductPair::Right(R::from(x))
     }
 }
 
@@ -163,12 +160,12 @@ where
 pub type Sig<E> = Coproduct![Constant, Add<E>];
 pub struct Expr(Sig<Expr>);
 
-impl<X> Contains<X> for Expr
+impl<X> From<X> for Expr
 where
-    Sig<Expr>: Contains<X>,
+    Sig<Expr>: From<X>,
 {
-    fn wrap(x: X) -> Expr {
-        Expr(Sig::<Expr>::wrap(x))
+    fn from(x: X) -> Expr {
+        Expr(Sig::<Expr>::from(x))
     }
 }
 
