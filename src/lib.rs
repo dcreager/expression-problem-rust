@@ -13,6 +13,10 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
+#![feature(optin_builtin_traits)]
+
 pub mod ch01a_before;
 pub mod ch01b_new_method;
 pub mod ch01c_sad_face;
+
+pub mod old;

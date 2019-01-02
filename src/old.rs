@@ -13,8 +13,6 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
-#![feature(optin_builtin_traits)]
-
 // ------------------------------------------------------------------------------------------------
 // Data types
 
@@ -43,16 +41,6 @@ pub fn add<E: From<Add<E>>>(lhs: E, rhs: E) -> E {
 
 // ------------------------------------------------------------------------------------------------
 // Open sums
-
-pub struct CoproductSingleton<L> {
-    left: L,
-}
-
-impl<L> From<L> for CoproductSingleton<L> {
-    fn from(left: L) -> CoproductSingleton<L> {
-        CoproductSingleton { left }
-    }
-}
 
 pub enum CoproductPair<L, R> {
     Left(L),
@@ -86,7 +74,7 @@ where
 }
 
 macro_rules! Coproduct {
-    { $A:ty } => { CoproductSingleton<$A> };
+    { $A:ty, $B:ty } => { CoproductPair<$A, $B> };
     { $A:ty, $($B:ty),+ } => { CoproductPair<$A, Coproduct![$($B),+]> };
 }
 
@@ -98,15 +86,6 @@ impl Result for i64 {}
 
 pub trait Evaluate {
     fn evaluate<V: Result>(&self) -> V;
-}
-
-impl<L> Evaluate for CoproductSingleton<L>
-where
-    L: Evaluate,
-{
-    fn evaluate<V: Result>(&self) -> V {
-        self.left.evaluate()
-    }
 }
 
 impl<L, R> Evaluate for CoproductPair<L, R>
