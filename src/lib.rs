@@ -13,7 +13,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
-#![feature(optin_builtin_traits, specialization)]
+#![feature(optin_builtin_traits)]
 
 // ------------------------------------------------------------------------------------------------
 // Data types
@@ -25,20 +25,8 @@ pub struct Constant {
     pub value: u64,
 }
 
-impl Constant {
-    fn new(value: u64) -> Constant {
-        Constant { value }
-    }
-}
-
 pub fn constant<E: From<Constant>>(value: u64) -> E {
-    E::from(Constant::new(value))
-}
-
-impl From<u64> for Constant {
-    fn from(value: u64) -> Constant {
-        Constant::new(value)
-    }
+    E::from(Constant { value })
 }
 
 pub struct Add<E> {
@@ -46,20 +34,15 @@ pub struct Add<E> {
     pub rhs: Box<E>,
 }
 
-impl<E> Add<E> {
-    pub fn new(lhs: E, rhs: E) -> Add<E> {
-        Add {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-        }
-    }
-}
-
 pub fn add<E: From<Add<E>>>(lhs: E, rhs: E) -> E {
-    E::from(Add::new(lhs, rhs))
+    E::from(Add {
+        lhs: Box::new(lhs),
+        rhs: Box::new(rhs),
+    })
 }
 
 // ------------------------------------------------------------------------------------------------
+// Open sums
 
 pub struct CoproductSingleton<L> {
     left: L,
@@ -207,25 +190,34 @@ mod eval_tests {
 
     #[test]
     fn can_evaluate_constant() {
-        let one: Constant = Constant::new(1);
+        let one: Constant = Constant { value: 1 };
         assert_eq!(one.evaluate::<u64>(), 1);
     }
 
     #[test]
     fn can_evaluate_add() {
-        let one: Constant = Constant::new(1);
-        let two: Constant = Constant::new(2);
-        let add = Add::new(one, two);
+        let one: Constant = Constant { value: 1 };
+        let two: Constant = Constant { value: 2 };
+        let add = Add {
+            lhs: Box::new(one),
+            rhs: Box::new(two),
+        };
         assert_eq!(add.evaluate::<u64>(), 3);
     }
 
     /*
     #[test]
     fn can_evaluate_add3() {
-        let one: Constant = Constant::new(1);
-        let two: Constant = Constant::new(2);
-        let three: Constant = Constant::new(3);
-        let add = Add::new(one, Add::new(two, three));
+        let one: Constant = Constant { value: 1 };
+        let two: Constant = Constant { value: 2 };
+        let three: Constant = Constant { value: 3 };
+        let add = Add {
+            lhs: Box::new(one),
+            rhs: Box::new(Add {
+                lhs: Box::new(two),
+                rhs: Box::new(three),
+            }),
+        };
         assert_eq!(add.evaluate::<u64>(), 6);
     }
     */
