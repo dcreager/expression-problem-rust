@@ -22,10 +22,10 @@ pub auto trait NotEq {}
 impl<X> !NotEq for (X, X) {}
 
 pub struct Constant {
-    pub value: u64,
+    pub value: i64,
 }
 
-pub fn constant<E: From<Constant>>(value: u64) -> E {
+pub fn constant<E: From<Constant>>(value: i64) -> E {
     E::from(Constant { value })
 }
 
@@ -93,8 +93,8 @@ macro_rules! Coproduct {
 // ------------------------------------------------------------------------------------------------
 // Evaluate
 
-pub trait Result: From<u64> + std::ops::Add<Output = Self> {}
-impl Result for u64 {}
+pub trait Result: From<i64> + std::ops::Add<Output = Self> {}
+impl Result for i64 {}
 
 pub trait Evaluate {
     fn evaluate<V: Result>(&self) -> V;
@@ -173,9 +173,9 @@ impl<L, R> Subtract<L, R> {
     }
 }
 
-impl<L, R> Evaluate<u64> for Subtract<L, R> where L: Evaluate<u64>, R: Evaluate<u64>
+impl<L, R> Evaluate<i64> for Subtract<L, R> where L: Evaluate<i64>, R: Evaluate<i64>
 {
-    fn evaluate(&self) -> u64 {
+    fn evaluate(&self) -> i64 {
         self.lhs.evaluate() - self.rhs.evaluate()
     }
 }
@@ -191,7 +191,7 @@ mod eval_tests {
     #[test]
     fn can_evaluate_constant() {
         let one: Constant = Constant { value: 1 };
-        assert_eq!(one.evaluate::<u64>(), 1);
+        assert_eq!(one.evaluate::<i64>(), 1);
     }
 
     #[test]
@@ -202,7 +202,7 @@ mod eval_tests {
             lhs: Box::new(one),
             rhs: Box::new(two),
         };
-        assert_eq!(add.evaluate::<u64>(), 3);
+        assert_eq!(add.evaluate::<i64>(), 3);
     }
 
     /*
@@ -218,26 +218,26 @@ mod eval_tests {
                 rhs: Box::new(three),
             }),
         };
-        assert_eq!(add.evaluate::<u64>(), 6);
+        assert_eq!(add.evaluate::<i64>(), 6);
     }
     */
 
     #[test]
     fn can_evaluate_expr_constant() {
         let one: Expr = constant(1);
-        assert_eq!(one.evaluate::<u64>(), 1);
+        assert_eq!(one.evaluate::<i64>(), 1);
     }
 
     #[test]
     fn can_evaluate_expr_add() {
         let add: Expr = add(constant(1), constant(2));
-        assert_eq!(add.evaluate::<u64>(), 3);
+        assert_eq!(add.evaluate::<i64>(), 3);
     }
 
     #[test]
     fn can_evaluate_expr_add3() {
         let add: Expr = add(constant(1), add(constant(2), constant(3)));
-        assert_eq!(add.evaluate::<u64>(), 6);
+        assert_eq!(add.evaluate::<i64>(), 6);
     }
 
     /*
