@@ -19,4 +19,8 @@ pub mod ch01a_before;
 pub mod ch01b_new_method;
 pub mod ch01c_sad_face;
 
+pub mod ch02_open_sum;
+pub mod ch03_evaluation;
+pub mod ch04_smart_constructors;
+
 pub mod old;

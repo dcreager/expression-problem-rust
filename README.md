@@ -42,3 +42,19 @@ writing new code, and not by editing any existing code.
 
 - [ch01c\_sad\_face](src/ch01c_sad_face.rs): We try to add a new kind of term to
   the language, and get pretty far before running into a brick wall.
+
+#### §2: Fixing the expression problem
+
+- [ch02\_open\_sum](src/ch02_open_sum.rs): Create separate types for each kind
+  of term, instead of force-glomming them into a single enum type.  Define a
+  generic `Sum` type to be able to pick and choose which ones to include.
+
+#### §3: Evaluation
+
+- [ch03\_evaluation](src/ch03_evaluation.rs): Define evaluation using a trait,
+  with an impl of that trait for each of our terms.
+
+#### §4: Automating injections
+
+- [ch04\_smart\_constructors](src/ch04_smart_constructors.rs): Make it not so
+  hideously ugly to create instances of our new types.
