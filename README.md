@@ -24,3 +24,21 @@ like.  Partly that's because (at least as of right now) we don't have some of
 the same building blocks available in Rust (e.g., functors, higher-kinded
 types).  But my hunch is that we have *different* building blocks that let us
 produce solutions with the same properties.  Let's see if that's true!
+
+Since a big part of the expression problem talks about what you can do without
+editing existing code, I'm going to implement this is a bunch of different Rust
+modules.  That will help enforce that we're building new capabilities by only
+writing new code, and not by editing any existing code.
+
+### Data types à la carte
+
+#### §1: Introduction
+
+- [ch01a\_before](src/ch01a_before.rs): We create a toy language and an AST for
+  it, and write some evaluation rules.
+
+- [ch01b\_new\_method](src/ch01b_new_method.rs): We add a new method that
+  operates on our AST.
+
+- [ch01c\_sad\_face](src/ch01c_sad_face.rs): We try to add a new kind of term to
+  the language, and get pretty far before running into a brick wall.
