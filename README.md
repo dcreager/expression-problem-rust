@@ -66,3 +66,8 @@ writing new code, and not by editing any existing code.
 
 - [ch05b\_display](src/ch05b_display.rs): It's also pretty easy to add a new
   function that operates on all of the terms we've defined so far!
+
+#### §6: Monads for free
+
+- [ch06\_calculator\_monad](src/ch06_calculator_monad.rs): In Rust, the monads
+  are even more free?  Since we don't really need them?

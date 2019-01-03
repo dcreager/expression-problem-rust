@@ -26,4 +26,6 @@ pub mod ch04_smart_constructors;
 pub mod ch05a_multiplication;
 pub mod ch05b_display;
 
+pub mod ch06_calculator_monad;
+
 pub mod old;
