@@ -58,3 +58,11 @@ writing new code, and not by editing any existing code.
 
 - [ch04\_smart\_constructors](src/ch04_smart_constructors.rs): Make it not so
   hideously ugly to create instances of our new types.
+
+#### §5: Examples
+
+- [ch05a\_multiplication](src/ch05a_multiplication.rs): It's pretty easy to add
+  a new kind of term!
+
+- [ch05b\_display](src/ch05b_display.rs): It's also pretty easy to add a new
+  function that operates on all of the terms we've defined so far!

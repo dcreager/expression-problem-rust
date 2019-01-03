@@ -23,4 +23,7 @@ pub mod ch02_open_sum;
 pub mod ch03_evaluation;
 pub mod ch04_smart_constructors;
 
+pub mod ch05a_multiplication;
+pub mod ch05b_display;
+
 pub mod old;
