@@ -28,4 +28,7 @@ pub mod ch05b_display;
 
 pub mod ch06_calculator_monad;
 
+pub mod ch07a_pairs;
+pub mod ch07b_generic_evaluation;
+
 pub mod old;

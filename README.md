@@ -51,8 +51,10 @@ writing new code, and not by editing any existing code.
 
 #### §3: Evaluation
 
-- [ch03\_evaluation](src/ch03_evaluation.rs): Define evaluation using a trait,
+- [ch03\_evaluation][]: Define evaluation using a trait,
   with an impl of that trait for each of our terms.
+
+[ch03\_evaluation]: src/ch03_evaluation.rs
 
 #### §4: Automating injections
 
@@ -71,3 +73,15 @@ writing new code, and not by editing any existing code.
 
 - [ch06\_calculator\_monad](src/ch06_calculator_monad.rs): In Rust, the monads
   are even more free?  Since we don't really need them?
+
+### Compositional data types
+
+#### §2.1 Evaluating expressions
+
+- [ch07a\_pairs](src/ch07a_pairs.rs): Let's add a new type of value to our
+  language.
+
+- [ch07b\_generic\_evaluation](src/ch07b_generic_evaluation.rs): How could we
+  have done a better job of defining our evaluation rules from
+  [ch03\_evaluation][] — so that we could reuse them as-is with our new
+  pair-equipped language?
