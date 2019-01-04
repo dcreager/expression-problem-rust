@@ -22,10 +22,24 @@ use crate::ch02_open_sum::*;
 use crate::ch04_smart_constructors::*;
 use crate::ch05a_multiplication::*;
 use crate::ch07b_generic_evaluation::*;
+use crate::ch99_functors::*;
 
 /// To negate a number, we could just multiply by -1!
 pub struct Negate<E> {
     pub value: Box<E>,
+}
+
+impl<'a, A, B, F> Functor<'a, A, B, F> for Negate<A>
+where
+    A: 'a,
+    F: Fn(&'a A) -> B,
+{
+    type Output = Negate<B>;
+    fn fmap(&'a self, f: F) -> Negate<B> {
+        Add {
+            value: Box::new(f(self.value.as_ref())),
+        }
+    }
 }
 
 // And a smart constructor
@@ -40,36 +54,22 @@ pub fn negate<E: From<Negate<E>>>(value: E) -> E {
 pub type NegateSig<E> = Sum<Negate<E>, MultSig<E>>;
 pub struct NegateExpr(pub NegateSig<NegateExpr>);
 
-impl<X> From<X> for NegateExpr
+impl<'a, B, F> Functor<'a, NegateExpr, B, F> for NegateExpr
 where
-    NegateSig<NegateExpr>: From<X>,
+    NegateExpr: 'a,
+    F: Fn(&'a NegateExpr) -> B,
 {
-    fn from(x: X) -> NegateExpr {
-        NegateExpr(NegateSig::<NegateExpr>::from(x))
+    type Output = NegateSig<B>;
+    fn fmap(&'a self, f: F) -> NegateSig<B> {
+        self.0.fmap(f)
     }
 }
 
 // We can evaluate NegateExprs directly
 
-impl<V, E> Evaluate<V> for Negate<E>
-where
-    E: Evaluate<V>,
-    V: std::ops::Neg<Output = V>,
-{
-    fn evaluate(&self) -> V {
-        -self.value.evaluate()
-    }
-}
-
-impl<V> Evaluate<V> for NegateExpr
-where
-    V: From<i64>
-        + std::ops::Add<Output = V>
-        + std::ops::Mul<Output = V>
-        + std::ops::Neg<Output = V>,
-{
-    fn evaluate(&self) -> V {
-        self.0.evaluate()
+impl EvalAlgebra for Negate<i64> {
+    fn eval(&self) -> i64 {
+        -self.value
     }
 }
 
@@ -148,7 +148,7 @@ mod tests {
     fn can_evaluate_negation() {
         let sugared: NegateExpr = negate(add(integer_literal(118), integer_literal(1219)));
         assert_eq!((&sugared as &Evaluate<i64>).evaluate(), -1337);
-        assert_eq!(evaluate::<i64, _>(&sugared), -1337);
+        assert_eq!(eval(&sugared), -1337);
     }
 
     #[test]
@@ -163,6 +163,6 @@ mod tests {
         let sugared: NegateExpr = negate(add(integer_literal(118), integer_literal(1219)));
         let desugared: MultExpr = sugared.desugar();
         assert_eq!((&desugared as &Evaluate<i64>).evaluate(), -1337);
-        assert_eq!(evaluate::<i64, _>(&desugared), -1337);
+        assert_eq!(eval(&desugared), -1337);
     }
 }

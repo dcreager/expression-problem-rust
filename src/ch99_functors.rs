@@ -14,34 +14,32 @@
 // ------------------------------------------------------------------------------------------------
 
 use crate::ch02_open_sum::*;
+use crate::ch05a_multiplication::*;
 
-pub trait Functor<'a, A, B, F>
+pub trait Functor<'a, A, B>
 where
     A: 'a,
-    F: Fn(&'a A) -> B,
 {
     type Output;
-    fn fmap(&'a self, f: F) -> Self::Output;
+    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Self::Output;
 }
 
-impl<'a, A, B, F> Functor<'a, A, B, F> for IntegerLiteral
+impl<'a, A, B> Functor<'a, A, B> for IntegerLiteral
 where
     A: 'a,
-    F: Fn(&'a A) -> B,
 {
     type Output = IntegerLiteral;
-    fn fmap(&'a self, _f: F) -> IntegerLiteral {
+    fn fmap(&'a self, _f: impl Fn(&'a A) -> B) -> IntegerLiteral {
         IntegerLiteral { value: self.value }
     }
 }
 
-impl<'a, A, B, F> Functor<'a, A, B, F> for Add<A>
+impl<'a, A, B> Functor<'a, A, B> for Add<A>
 where
     A: 'a,
-    F: Fn(&'a A) -> B,
 {
     type Output = Add<B>;
-    fn fmap(&'a self, f: F) -> Add<B> {
+    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Add<B> {
         Add {
             lhs: Box::new(f(self.lhs.as_ref())),
             rhs: Box::new(f(self.rhs.as_ref())),
@@ -49,15 +47,27 @@ where
     }
 }
 
-impl<'a, A, B, F, L, R> Functor<'a, A, B, F> for Sum<L, R>
+impl<'a, A, B> Functor<'a, A, B> for Multiply<A>
 where
     A: 'a,
-    F: Fn(&'a A) -> B,
-    L: Functor<'a, A, B, F>,
-    R: Functor<'a, A, B, F>,
+{
+    type Output = Multiply<B>;
+    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Multiply<B> {
+        Multiply {
+            lhs: Box::new(f(self.lhs.as_ref())),
+            rhs: Box::new(f(self.rhs.as_ref())),
+        }
+    }
+}
+
+impl<'a, A, B, L, R> Functor<'a, A, B> for Sum<L, R>
+where
+    A: 'a,
+    L: Functor<'a, A, B>,
+    R: Functor<'a, A, B>,
 {
     type Output = Sum<L::Output, R::Output>;
-    fn fmap(&'a self, f: F) -> Sum<L::Output, R::Output> {
+    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Sum<L::Output, R::Output> {
         match self {
             Sum::Left(left) => Sum::Left(left.fmap(f)),
             Sum::Right(right) => Sum::Right(right.fmap(f)),
@@ -65,18 +75,27 @@ where
     }
 }
 
-impl<'a, B, F> Functor<'a, Expr, B, F> for Expr
+impl<'a, B> Functor<'a, Expr, B> for Expr
 where
     Expr: 'a,
-    F: Fn(&'a Expr) -> B,
 {
     type Output = Sig<B>;
-    fn fmap(&'a self, f: F) -> Sig<B> {
+    fn fmap(&'a self, f: impl Fn(&'a Expr) -> B) -> Sig<B> {
         self.0.fmap(f)
     }
 }
 
-trait EvalAlgebra {
+impl<'a, B> Functor<'a, MultExpr, B> for MultExpr
+where
+    MultExpr: 'a,
+{
+    type Output = MultSig<B>;
+    fn fmap(&'a self, f: impl Fn(&'a MultExpr) -> B) -> MultSig<B> {
+        self.0.fmap(f)
+    }
+}
+
+pub trait EvalAlgebra {
     fn eval(&self) -> i64;
 }
 
@@ -89,6 +108,12 @@ impl EvalAlgebra for IntegerLiteral {
 impl EvalAlgebra for Add<i64> {
     fn eval(&self) -> i64 {
         *self.lhs + *self.rhs
+    }
+}
+
+impl EvalAlgebra for Multiply<i64> {
+    fn eval(&self) -> i64 {
+        *self.lhs * *self.rhs
     }
 }
 
@@ -105,14 +130,26 @@ where
     }
 }
 
-pub fn eval(expr: &Expr) -> i64 {
+pub fn eval<'a, E>(expr: &'a E) -> i64
+where
+    E: Functor<'a, E, i64>,
+    E::Output: EvalAlgebra,
+{
     expr.fmap(eval).eval()
+}
+
+use crate::ch04_smart_constructors::*;
+pub fn fwomp() -> i64 {
+    let add: MultExpr = multiply(
+        integer_literal(30000),
+        add(integer_literal(1330), integer_literal(7)),
+    );
+    eval(&add)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ch04_smart_constructors::*;
 
     #[test]
     fn can_evaluate_ugly_expression() {
