@@ -13,6 +13,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
+use std::marker::PhantomData;
+
 use crate::ch02_open_sum::*;
 use crate::ch05a_multiplication::*;
 
@@ -59,8 +61,8 @@ where
     type Output = Add<Op::Output>;
     fn fmap(&self) -> Add<Op::Output> {
         Add {
-            lhs: Box::new(Op::call(self.lhs.as_ref())),
-            rhs: Box::new(Op::call(self.rhs.as_ref())),
+            lhs: Op::call(&self.lhs),
+            rhs: Op::call(&self.rhs),
         }
     }
 }
@@ -72,8 +74,8 @@ where
     type Output = Multiply<Op::Output>;
     fn fmap(&self) -> Multiply<Op::Output> {
         Multiply {
-            lhs: Box::new(Op::call(self.lhs.as_ref())),
-            rhs: Box::new(Op::call(self.rhs.as_ref())),
+            lhs: Op::call(&self.lhs),
+            rhs: Op::call(&self.rhs),
         }
     }
 }
@@ -93,7 +95,7 @@ where
     }
 }
 
-impl<Op> Functor<Op> for Expr
+impl<Op> Functor<Op> for Box<Expr>
 where
     Op: Function,
     Sig<Expr>: Functor<Op>,
@@ -104,7 +106,7 @@ where
     }
 }
 
-impl<Op> Functor<Op> for MultExpr
+impl<Op> Functor<Op> for Box<MultExpr>
 where
     Op: Function,
     MultSig<MultExpr>: Functor<Op>,
@@ -127,13 +129,13 @@ impl EvalAlgebra for IntegerLiteral {
 
 impl EvalAlgebra for Add<i64> {
     fn eval(&self) -> i64 {
-        *self.lhs + *self.rhs
+        self.lhs + self.rhs
     }
 }
 
 impl EvalAlgebra for Multiply<i64> {
     fn eval(&self) -> i64 {
-        *self.lhs * *self.rhs
+        self.lhs * self.rhs
     }
 }
 
@@ -150,17 +152,23 @@ where
     }
 }
 
-pub struct Eval;
+pub struct Eval<E> {
+    phantom: PhantomData<E>,
+}
 
-impl Function for Eval {
-    type Input = Expr;
+impl<E> Function for Eval<E> {
+    type Input = Box<E>;
     type Output = i64;
     fn call(expr: &Self::Input) -> Self::Output {
         eval(expr)
     }
 }
 
-pub fn eval(expr: &Expr) -> i64 {
+pub fn eval<E>(expr: &E) -> i64
+where
+    E: Functor<Eval<E>>,
+    E::Output: EvalAlgebra,
+{
     fmap::<Eval, _>(expr).eval()
 }
 
@@ -176,10 +184,10 @@ where
 
 use crate::ch04_smart_constructors::*;
 pub fn fwomp() -> i64 {
-    let add: Expr = add(
+    let add = Box::<Expr>::new(add(
         integer_literal(30000),
         add(integer_literal(1330), integer_literal(7)),
-    );
+    ));
     eval(&add)
 }
 
@@ -190,16 +198,16 @@ mod tests {
 
     #[test]
     fn can_evaluate_ugly_expression() {
-        let add: Expr = add(integer_literal(118), integer_literal(1219));
+        let add = Box::<Expr>::new(add(integer_literal(118), integer_literal(1219)));
         assert_eq!(eval(&add), 1337);
     }
 
     #[test]
     fn can_evaluate_nested_expression() {
-        let add: Expr = add(
+        let add = Box::<Expr>::new(add(
             integer_literal(30000),
             add(integer_literal(1330), integer_literal(7)),
-        );
+        ));
         assert_eq!(eval(&add), 31337);
     }
 }
