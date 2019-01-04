@@ -50,6 +50,24 @@ pub enum Sum<L, R> {
 pub type Sig<E> = Sum<IntegerLiteral, Add<E>>;
 pub struct Expr(pub Sig<Expr>);
 
+pub trait Expression {
+    type Signature;
+    fn wrap(sig: Self::Signature) -> Self;
+    fn unwrap(&self) -> &Self::Signature;
+}
+
+impl Expression for Expr {
+    type Signature = Sig<Expr>;
+
+    fn wrap(sig: Self::Signature) -> Self {
+        Self(sig)
+    }
+
+    fn unwrap(&self) -> &Self::Signature {
+        &self.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

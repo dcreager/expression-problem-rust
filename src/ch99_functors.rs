@@ -16,82 +16,102 @@
 use crate::ch02_open_sum::*;
 use crate::ch05a_multiplication::*;
 
-pub trait Functor<'a, A, B>
+pub trait Function
 where
-    A: 'a,
+    Self: Sized,
 {
+    type Input;
     type Output;
-    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Self::Output;
+    fn call(input: &Self::Input) -> Self::Output;
 }
 
-impl<'a, A, B> Functor<'a, A, B> for IntegerLiteral
+pub trait Functor<Op>
 where
-    A: 'a,
+    Self: Sized,
+    Op: Function,
+{
+    type Output;
+    fn fmap(&self) -> Self::Output;
+}
+
+pub fn fmap<Op, X>(x: &X) -> X::Output
+where
+    X: Functor<Op>,
+    Op: Function,
+{
+    x.fmap()
+}
+
+impl<Op> Functor<Op> for IntegerLiteral
+where
+    Op: Function,
 {
     type Output = IntegerLiteral;
-    fn fmap(&'a self, _f: impl Fn(&'a A) -> B) -> IntegerLiteral {
+    fn fmap(&self) -> IntegerLiteral {
         IntegerLiteral { value: self.value }
     }
 }
 
-impl<'a, A, B> Functor<'a, A, B> for Add<A>
+impl<Op, E> Functor<Op> for Add<E>
 where
-    A: 'a,
+    Op: Function<Input = E>,
 {
-    type Output = Add<B>;
-    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Add<B> {
+    type Output = Add<Op::Output>;
+    fn fmap(&self) -> Add<Op::Output> {
         Add {
-            lhs: Box::new(f(self.lhs.as_ref())),
-            rhs: Box::new(f(self.rhs.as_ref())),
+            lhs: Box::new(Op::call(self.lhs.as_ref())),
+            rhs: Box::new(Op::call(self.rhs.as_ref())),
         }
     }
 }
 
-impl<'a, A, B> Functor<'a, A, B> for Multiply<A>
+impl<Op, E> Functor<Op> for Multiply<E>
 where
-    A: 'a,
+    Op: Function<Input = E>,
 {
-    type Output = Multiply<B>;
-    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Multiply<B> {
+    type Output = Multiply<Op::Output>;
+    fn fmap(&self) -> Multiply<Op::Output> {
         Multiply {
-            lhs: Box::new(f(self.lhs.as_ref())),
-            rhs: Box::new(f(self.rhs.as_ref())),
+            lhs: Box::new(Op::call(self.lhs.as_ref())),
+            rhs: Box::new(Op::call(self.rhs.as_ref())),
         }
     }
 }
 
-impl<'a, A, B, L, R> Functor<'a, A, B> for Sum<L, R>
+impl<Op, L, R> Functor<Op> for Sum<L, R>
 where
-    A: 'a,
-    L: Functor<'a, A, B>,
-    R: Functor<'a, A, B>,
+    Op: Function,
+    L: Functor<Op>,
+    R: Functor<Op>,
 {
     type Output = Sum<L::Output, R::Output>;
-    fn fmap(&'a self, f: impl Fn(&'a A) -> B) -> Sum<L::Output, R::Output> {
+    fn fmap(&self) -> Sum<L::Output, R::Output> {
         match self {
-            Sum::Left(left) => Sum::Left(left.fmap(f)),
-            Sum::Right(right) => Sum::Right(right.fmap(f)),
+            Sum::Left(left) => Sum::Left(left.fmap()),
+            Sum::Right(right) => Sum::Right(right.fmap()),
         }
     }
 }
 
-impl<'a, B> Functor<'a, Expr, B> for Expr
+impl<Op> Functor<Op> for Expr
 where
-    Expr: 'a,
+    Op: Function,
+    Sig<Expr>: Functor<Op>,
 {
-    type Output = Sig<B>;
-    fn fmap(&'a self, f: impl Fn(&'a Expr) -> B) -> Sig<B> {
-        self.0.fmap(f)
+    type Output = <Sig<Expr> as Functor<Op>>::Output;
+    fn fmap(&self) -> Self::Output {
+        self.0.fmap()
     }
 }
 
-impl<'a, B> Functor<'a, MultExpr, B> for MultExpr
+impl<Op> Functor<Op> for MultExpr
 where
-    MultExpr: 'a,
+    Op: Function,
+    MultSig<MultExpr>: Functor<Op>,
 {
-    type Output = MultSig<B>;
-    fn fmap(&'a self, f: impl Fn(&'a MultExpr) -> B) -> MultSig<B> {
-        self.0.fmap(f)
+    type Output = <MultSig<MultExpr> as Functor<Op>>::Output;
+    fn fmap(&self) -> Self::Output {
+        self.0.fmap()
     }
 }
 
@@ -130,6 +150,21 @@ where
     }
 }
 
+pub struct Eval;
+
+impl Function for Eval {
+    type Input = Expr;
+    type Output = i64;
+    fn call(expr: &Self::Input) -> Self::Output {
+        eval(expr)
+    }
+}
+
+pub fn eval(expr: &Expr) -> i64 {
+    fmap::<Eval, _>(expr).eval()
+}
+
+/*
 pub fn eval<'a, E>(expr: &'a E) -> i64
 where
     E: Functor<'a, E, i64>,
@@ -137,10 +172,11 @@ where
 {
     expr.fmap(eval).eval()
 }
+*/
 
 use crate::ch04_smart_constructors::*;
 pub fn fwomp() -> i64 {
-    let add: MultExpr = multiply(
+    let add: Expr = add(
         integer_literal(30000),
         add(integer_literal(1330), integer_literal(7)),
     );
@@ -150,6 +186,7 @@ pub fn fwomp() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ch04_smart_constructors::*;
 
     #[test]
     fn can_evaluate_ugly_expression() {

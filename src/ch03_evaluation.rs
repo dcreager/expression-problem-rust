@@ -69,6 +69,18 @@ impl EvaluateInt for Expr {
     }
 }
 
+/*
+impl<E> EvaluateInt for E
+where
+    E: Expression,
+    E::Signature: EvaluateInt,
+{
+    fn evaluate(&self) -> i64 {
+        self.unwrap().evaluate()
+    }
+}
+*/
+
 #[cfg(test)]
 mod tests {
     use super::*;
