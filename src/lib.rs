@@ -33,4 +33,6 @@ pub mod ch07b_generic_evaluation;
 pub mod ch07c_pair_evaluation;
 pub mod ch07d_safer_pair_evaluation;
 
+pub mod ch99_functors;
+
 pub mod old;
