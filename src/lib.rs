@@ -13,7 +13,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
-#![feature(optin_builtin_traits)]
+#![feature(optin_builtin_traits, specialization)]
 
 pub mod ch01a_before;
 pub mod ch01b_new_method;
@@ -31,6 +31,9 @@ pub mod ch06_calculator_monad;
 pub mod ch07a_pairs;
 pub mod ch07b_generic_evaluation;
 pub mod ch07c_pair_evaluation;
+
+pub mod ch08_sugar;
+
 pub mod ch07d_safer_pair_evaluation;
 
 pub mod ch99_functors;

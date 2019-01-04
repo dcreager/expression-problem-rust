@@ -19,6 +19,7 @@
 //! we can extend in a different module to work with PairExpr and pairs?  (Yes.)
 
 use crate::ch02_open_sum::*;
+use crate::ch05a_multiplication::*;
 
 /// Well that was easy.  (Not really!  Don't worry, we'll run into wrinkles.)
 pub trait Evaluate<V> {
@@ -59,6 +60,16 @@ where
     }
 }
 
+impl<V, E> Evaluate<V> for Multiply<E>
+where
+    E: Evaluate<V>,
+    V: std::ops::Mul<Output = V>,
+{
+    fn evaluate(&self) -> V {
+        self.lhs.evaluate() * self.rhs.evaluate()
+    }
+}
+
 /// We can evaluate a sum if we know how to evaluate both of its variants; we just delegate to the
 /// underlying type's impl.
 impl<V, L, R> Evaluate<V> for Sum<L, R>
@@ -80,6 +91,15 @@ where
 impl<V> Evaluate<V> for Expr
 where
     V: From<i64> + std::ops::Add<Output = V>,
+{
+    fn evaluate(&self) -> V {
+        self.0.evaluate()
+    }
+}
+
+impl<V> Evaluate<V> for MultExpr
+where
+    V: From<i64> + std::ops::Add<Output = V> + std::ops::Mul<Output = V>,
 {
     fn evaluate(&self) -> V {
         self.0.evaluate()
@@ -110,5 +130,15 @@ mod tests {
         );
         assert_eq!((&add as &Evaluate<i64>).evaluate(), 31337);
         assert_eq!(evaluate::<i64, _>(&add), 31337);
+    }
+
+    #[test]
+    fn can_evaluate_multiplication() {
+        let mult: MultExpr = add(
+            multiply(integer_literal(80), integer_literal(5)),
+            integer_literal(4),
+        );
+        assert_eq!((&mult as &Evaluate<i64>).evaluate(), 404);
+        assert_eq!(evaluate::<i64, _>(&mult), 404);
     }
 }
