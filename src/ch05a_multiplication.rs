@@ -20,8 +20,8 @@ use crate::ch03_evaluation::*;
 
 /// First a type for the new term
 pub struct Multiply<E> {
-    pub lhs: Box<E>,
-    pub rhs: Box<E>,
+    pub lhs: E,
+    pub rhs: E,
 }
 
 /// Then an evaluation rule for it
@@ -37,15 +37,12 @@ where
 
 /// And a smart constructor
 pub fn multiply<E: From<Multiply<E>>>(lhs: E, rhs: E) -> E {
-    E::from(Multiply {
-        lhs: Box::new(lhs),
-        rhs: Box::new(rhs),
-    })
+    E::from(Multiply { lhs, rhs })
 }
 
 // And then an expression that can contain it, along with the existing terms.
 pub type MultSig<E> = Sum<Multiply<E>, Sig<E>>;
-pub struct MultExpr(pub MultSig<MultExpr>);
+pub struct MultExpr(pub Box<MultSig<MultExpr>>);
 
 impl EvaluateInt for MultExpr {
     fn evaluate(&self) -> i64 {
@@ -58,13 +55,13 @@ where
     MultSig<MultExpr>: From<X>,
 {
     fn from(x: X) -> MultExpr {
-        MultExpr(MultSig::<MultExpr>::from(x))
+        MultExpr(Box::new(MultSig::<MultExpr>::from(x)))
     }
 }
 
 // And to show off, we can create an expression that isn't allowed to contain addition!
 pub type NoAddSig<E> = Sum<IntegerLiteral, Multiply<E>>;
-pub struct NoAddExpr(pub NoAddSig<NoAddExpr>);
+pub struct NoAddExpr(pub Box<NoAddSig<NoAddExpr>>);
 
 impl EvaluateInt for NoAddExpr {
     fn evaluate(&self) -> i64 {
@@ -77,7 +74,7 @@ where
     NoAddSig<NoAddExpr>: From<X>,
 {
     fn from(x: X) -> NoAddExpr {
-        NoAddExpr(NoAddSig::<NoAddExpr>::from(x))
+        NoAddExpr(Box::new(NoAddSig::<NoAddExpr>::from(x)))
     }
 }
 

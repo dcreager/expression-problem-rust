@@ -76,10 +76,10 @@ mod tests {
     #[test]
     fn can_evaluate_ugly_expression() {
         // 118 + 1219
-        let add: Expr = Expr(Sum::Right(Add::<Expr> {
-            lhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 118 }))),
-            rhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 1219 }))),
-        }));
+        let add: Expr = Expr(Box::new(Sum::Right(Add::<Expr> {
+            lhs: Expr(Box::new(Sum::Left(IntegerLiteral { value: 118 }))),
+            rhs: Expr(Box::new(Sum::Left(IntegerLiteral { value: 1219 }))),
+        })));
         assert_eq!(add.evaluate(), 1337);
     }
 }

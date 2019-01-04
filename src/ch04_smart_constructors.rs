@@ -58,7 +58,7 @@ where
     Sig<Expr>: From<X>,
 {
     fn from(x: X) -> Expr {
-        Expr(Sig::<Expr>::from(x))
+        Expr(Box::new(Sig::<Expr>::from(x)))
     }
 }
 
@@ -69,10 +69,7 @@ pub fn integer_literal<E: From<IntegerLiteral>>(value: i64) -> E {
 }
 
 pub fn add<E: From<Add<E>>>(lhs: E, rhs: E) -> E {
-    E::from(Add {
-        lhs: Box::new(lhs),
-        rhs: Box::new(rhs),
-    })
+    E::from(Add { lhs, rhs })
 }
 
 #[cfg(test)]
