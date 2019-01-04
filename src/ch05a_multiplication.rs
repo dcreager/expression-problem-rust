@@ -20,8 +20,8 @@ use crate::ch03_evaluation::*;
 
 /// First a type for the new term
 pub struct Multiply<E> {
-    pub lhs: Box<E>,
-    pub rhs: Box<E>,
+    pub lhs: E,
+    pub rhs: E,
 }
 
 /// Then an evaluation rule for it
@@ -36,7 +36,7 @@ where
 }
 
 /// And a smart constructor
-pub fn multiply<E: From<Multiply<E>>>(lhs: E, rhs: E) -> E {
+pub fn multiply<E: From<Multiply<Box<E>>>>(lhs: E, rhs: E) -> E {
     E::from(Multiply {
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),
@@ -44,7 +44,7 @@ pub fn multiply<E: From<Multiply<E>>>(lhs: E, rhs: E) -> E {
 }
 
 // And then an expression that can contain it, along with the existing terms.
-pub type MultSig<E> = Sum<Multiply<E>, Sig<E>>;
+pub type MultSig<E> = Sum<Multiply<Box<E>>, Sig<E>>;
 pub struct MultExpr(pub MultSig<MultExpr>);
 
 impl EvaluateInt for MultExpr {
@@ -63,7 +63,7 @@ where
 }
 
 // And to show off, we can create an expression that isn't allowed to contain addition!
-pub type NoAddSig<E> = Sum<IntegerLiteral, Multiply<E>>;
+pub type NoAddSig<E> = Sum<IntegerLiteral, Multiply<Box<E>>>;
 pub struct NoAddExpr(pub NoAddSig<NoAddExpr>);
 
 impl EvaluateInt for NoAddExpr {

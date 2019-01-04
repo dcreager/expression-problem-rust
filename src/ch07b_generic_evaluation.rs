@@ -26,6 +26,15 @@ pub trait Evaluate<V> {
     fn evaluate(&self) -> V;
 }
 
+impl<V, T> Evaluate<V> for Box<T>
+where
+    T: Evaluate<V>,
+{
+    fn evaluate(&self) -> V {
+        self.as_ref().evaluate()
+    }
+}
+
 /// This helper function will make things easier for us when we try to call our evaluate trait
 /// method.  (We'll have to explicitly call out which value type we want to use, and it's somewhat
 /// less verbose to do that on a function than trying to cast our Expr type to the right trait

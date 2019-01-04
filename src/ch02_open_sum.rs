@@ -29,8 +29,8 @@ pub struct IntegerLiteral {
 /// know what type the left- and right-hand sides should have.  Let's punt for now, and take that
 /// in as a generic type parameter.  (Just like Swierstra does in the paper!)
 pub struct Add<E> {
-    pub lhs: Box<E>,
-    pub rhs: Box<E>,
+    pub lhs: E,
+    pub rhs: E,
 }
 
 /// This is how we'll create the different Expression types from ch01!  This corresponds to the :+:
@@ -47,7 +47,7 @@ pub enum Sum<L, R> {
 // But that won't compile, since you end up with a cycle in the type expansion.  We end up having
 // to define the `Val :+: Add` part and the `Expr` wrapper separately:
 
-pub type Sig<E> = Sum<IntegerLiteral, Add<E>>;
+pub type Sig<E> = Sum<IntegerLiteral, Add<Box<E>>>;
 pub struct Expr(pub Sig<Expr>);
 
 pub trait Expression {
@@ -76,7 +76,7 @@ mod tests {
     fn can_instantiate_ugly_expression() {
         // 118 + 1219
         // This is ugly, but we can instantiate it!
-        let _: Expr = Expr(Sum::Right(Add::<Expr> {
+        let _: Expr = Expr(Sum::Right(Add::<Box<Expr>> {
             lhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 118 }))),
             rhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 1219 }))),
         }));

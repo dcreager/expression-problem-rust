@@ -20,36 +20,36 @@ use crate::ch02_open_sum::*;
 
 /// Creates a new pair, whose contents are given by two subexpressions.
 pub struct Pair<E> {
-    pub first: Box<E>,
-    pub second: Box<E>,
+    pub first: E,
+    pub second: E,
 }
 
 /// Extract the first element of a pair.
 pub struct First<E> {
-    pub pair: Box<E>,
+    pub pair: E,
 }
 
 /// Extract the second element of a pair.
 pub struct Second<E> {
-    pub pair: Box<E>,
+    pub pair: E,
 }
 
 // And some smart constructors
 
-pub fn pair<E: From<Pair<E>>>(first: E, second: E) -> E {
+pub fn pair<E: From<Pair<Box<E>>>>(first: E, second: E) -> E {
     E::from(Pair {
         first: Box::new(first),
         second: Box::new(second),
     })
 }
 
-pub fn first<E: From<First<E>>>(pair: E) -> E {
+pub fn first<E: From<First<Box<E>>>>(pair: E) -> E {
     E::from(First {
         pair: Box::new(pair),
     })
 }
 
-pub fn second<E: From<Second<E>>>(pair: E) -> E {
+pub fn second<E: From<Second<Box<E>>>>(pair: E) -> E {
     E::from(Second {
         pair: Box::new(pair),
     })
@@ -64,7 +64,7 @@ macro_rules! Sum {
 
 // Now we create an expression type that can include pairs.
 
-pub type PairSig<E> = Sum![Pair<E>, First<E>, Second<E>, Sig<E>];
+pub type PairSig<E> = Sum![Pair<Box<E>>, First<Box<E>>, Second<Box<E>>, Sig<E>];
 pub struct PairExpr(pub PairSig<PairExpr>);
 
 impl<X> From<X> for PairExpr

@@ -68,7 +68,7 @@ pub fn integer_literal<E: From<IntegerLiteral>>(value: i64) -> E {
     E::from(IntegerLiteral { value })
 }
 
-pub fn add<E: From<Add<E>>>(lhs: E, rhs: E) -> E {
+pub fn add<E: From<Add<Box<E>>>>(lhs: E, rhs: E) -> E {
     E::from(Add {
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),

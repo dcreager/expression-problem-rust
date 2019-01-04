@@ -26,6 +26,15 @@ pub trait EvaluateInt {
     fn evaluate(&self) -> i64;
 }
 
+impl<T> EvaluateInt for Box<T>
+where
+    T: EvaluateInt,
+{
+    fn evaluate(&self) -> i64 {
+        self.as_ref().evaluate()
+    }
+}
+
 /// Integer literals evaluate to their value.
 impl EvaluateInt for IntegerLiteral {
     fn evaluate(&self) -> i64 {
@@ -88,7 +97,7 @@ mod tests {
     #[test]
     fn can_evaluate_ugly_expression() {
         // 118 + 1219
-        let add: Expr = Expr(Sum::Right(Add::<Expr> {
+        let add: Expr = Expr(Sum::Right(Add::<Box<Expr>> {
             lhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 118 }))),
             rhs: Box::new(Expr(Sum::Left(IntegerLiteral { value: 1219 }))),
         }));
