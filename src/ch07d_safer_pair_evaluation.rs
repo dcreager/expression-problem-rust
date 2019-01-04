@@ -19,52 +19,57 @@
 
 use crate::ch07c_pair_evaluation::*;
 
-/// Now we need a value type that can be either an integer or a pair, with all of the various value
-/// impls that we've defined or used so far.
 #[derive(Debug, PartialEq)]
-pub enum SafeIntOrPair {
-    Int(i64),
-    Pair(Box<SafeIntOrPair>, Box<SafeIntOrPair>),
-    Error(&'static str),
+pub struct SafeIntOrPair(Option<IntOrPair>);
+
+impl From<Option<IntOrPair>> for SafeIntOrPair {
+    fn from(value: Option<IntOrPair>) -> SafeIntOrPair {
+        SafeIntOrPair(value)
+    }
 }
 
 impl From<i64> for SafeIntOrPair {
     fn from(value: i64) -> SafeIntOrPair {
-        SafeIntOrPair::Int(value)
+        Some(IntOrPair::Int(value)).into()
     }
 }
 
 impl std::ops::Add for SafeIntOrPair {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        if let SafeIntOrPair::Int(lhs) = self {
-            if let SafeIntOrPair::Int(rhs) = other {
-                return SafeIntOrPair::Int(lhs + rhs);
+        if let SafeIntOrPair(Some(IntOrPair::Int(lhs))) = self {
+            if let SafeIntOrPair(Some(IntOrPair::Int(rhs))) = other {
+                return Some(IntOrPair::Int(lhs + rhs)).into();
             }
         }
-        SafeIntOrPair::Error("Cannot add non-integers")
+        None.into()
     }
 }
 
 impl From<(SafeIntOrPair, SafeIntOrPair)> for SafeIntOrPair {
     fn from(value: (SafeIntOrPair, SafeIntOrPair)) -> SafeIntOrPair {
-        SafeIntOrPair::Pair(Box::new(value.0), Box::new(value.1))
+        if let SafeIntOrPair(Some(first)) = value.0 {
+            if let SafeIntOrPair(Some(second)) = value.1 {
+                return Some(IntOrPair::Pair(Box::new(first), Box::new(second))).into();
+            }
+        }
+        None.into()
     }
 }
 
 impl ProjectPair for SafeIntOrPair {
     fn first(self) -> SafeIntOrPair {
-        if let SafeIntOrPair::Pair(first, _) = self {
-            return *first;
+        if let SafeIntOrPair(Some(IntOrPair::Pair(first, _))) = self {
+            return SafeIntOrPair(Some(*first));
         }
-        SafeIntOrPair::Error("Cannot project non-pairs")
+        None.into()
     }
 
     fn second(self) -> SafeIntOrPair {
-        if let SafeIntOrPair::Pair(_, second) = self {
-            return *second;
+        if let SafeIntOrPair(Some(IntOrPair::Pair(_, second))) = self {
+            return SafeIntOrPair(Some(*second));
         }
-        SafeIntOrPair::Error("Cannot project non-pairs")
+        None.into()
     }
 }
 
@@ -85,10 +90,13 @@ mod tests {
         // Kind of gross
         assert_eq!(
             (&add as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Int(1337)
+            Some(IntOrPair::Int(1337)).into()
         );
         // A little bit nicer
-        assert_eq!(evaluate::<SafeIntOrPair, _>(&add), SafeIntOrPair::Int(1337));
+        assert_eq!(
+            evaluate::<SafeIntOrPair, _>(&add),
+            Some(IntOrPair::Int(1337)).into()
+        );
     }
 
     #[test]
@@ -100,11 +108,11 @@ mod tests {
         );
         assert_eq!(
             (&add as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Int(31337)
+            Some(IntOrPair::Int(31337)).into()
         );
         assert_eq!(
             evaluate::<SafeIntOrPair, _>(&add),
-            SafeIntOrPair::Int(31337)
+            Some(IntOrPair::Int(31337)).into()
         );
     }
 
@@ -113,17 +121,19 @@ mod tests {
         let expr: PairExpr = pair(integer_literal(7), integer_literal(6));
         assert_eq!(
             (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Pair(
-                Box::new(SafeIntOrPair::Int(7)),
-                Box::new(SafeIntOrPair::Int(6))
-            )
+            Some(IntOrPair::Pair(
+                Box::new(IntOrPair::Int(7)),
+                Box::new(IntOrPair::Int(6))
+            ))
+            .into()
         );
         assert_eq!(
             evaluate::<SafeIntOrPair, _>(&expr),
-            SafeIntOrPair::Pair(
-                Box::new(SafeIntOrPair::Int(7)),
-                Box::new(SafeIntOrPair::Int(6))
-            )
+            Some(IntOrPair::Pair(
+                Box::new(IntOrPair::Int(7)),
+                Box::new(IntOrPair::Int(6))
+            ))
+            .into()
         );
     }
 
@@ -132,9 +142,12 @@ mod tests {
         let expr: PairExpr = first(pair(integer_literal(7), integer_literal(6)));
         assert_eq!(
             (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Int(7)
+            Some(IntOrPair::Int(7)).into()
         );
-        assert_eq!(evaluate::<SafeIntOrPair, _>(&expr), SafeIntOrPair::Int(7));
+        assert_eq!(
+            evaluate::<SafeIntOrPair, _>(&expr),
+            Some(IntOrPair::Int(7)).into()
+        );
     }
 
     // The failed evaluations now produce an Error value, instead of panicking!  Nice!
@@ -142,14 +155,8 @@ mod tests {
     #[test]
     fn cannot_project_integer() {
         let expr: PairExpr = first(integer_literal(7));
-        assert_eq!(
-            (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Error("Cannot project non-pairs"),
-        );
-        assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&expr),
-            SafeIntOrPair::Error("Cannot project non-pairs")
-        );
+        assert_eq!((&expr as &Evaluate<SafeIntOrPair>).evaluate(), None.into());
+        assert_eq!(evaluate::<SafeIntOrPair, _>(&expr), None.into());
     }
 
     #[test]
@@ -158,13 +165,7 @@ mod tests {
             pair(integer_literal(1), integer_literal(2)),
             integer_literal(3),
         );
-        assert_eq!(
-            (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
-            SafeIntOrPair::Error("Cannot add non-integers"),
-        );
-        assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&expr),
-            SafeIntOrPair::Error("Cannot add non-integers")
-        );
+        assert_eq!((&expr as &Evaluate<SafeIntOrPair>).evaluate(), None.into());
+        assert_eq!(evaluate::<SafeIntOrPair, _>(&expr), None.into());
     }
 }

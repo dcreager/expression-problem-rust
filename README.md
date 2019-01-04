@@ -90,7 +90,9 @@ writing new code, and not by editing any existing code.
   evaluation rules for pairs too!  And we can reuse the existing evaluation
   rules for integers, even though we now have a more complicated value type.
 
-- [ch07d\_safer\_pair\_evaluation](src/ch07d_safer_pair_evaluation.rs): Let's do
-  that again without panicking when we encounter a type error.  No changes
-  needed to the evaluation rules — we just need to define a value type that can
-  encode errors!
+#### §3.2 Monadic computations
+
+- [ch07d\_safer\_pair\_evaluation](src/ch07d_safer_pair_evaluation.rs): Let's
+  evaluate pairs again, without panicking when we encounter a type error.  No
+  changes needed to the evaluation rules — we just need to use a value type that
+  can encode errors!
