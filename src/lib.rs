@@ -30,5 +30,6 @@ pub mod ch06_calculator_monad;
 
 pub mod ch07a_pairs;
 pub mod ch07b_generic_evaluation;
+pub mod ch07c_pair_evaluation;
 
 pub mod old;

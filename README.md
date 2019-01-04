@@ -85,3 +85,7 @@ writing new code, and not by editing any existing code.
   have done a better job of defining our evaluation rules from
   [ch03\_evaluation][] — so that we could reuse them as-is with our new
   pair-equipped language?
+
+- [ch07c\_pair\_evaluation](src/ch07c_pair_evaluation.rs): And now we can add
+  evaluation rules for pairs too!  And we can reuse the existing evaluation
+  rules for integers, even though we now have a more complicated value type.
