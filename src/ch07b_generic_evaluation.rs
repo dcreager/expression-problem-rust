@@ -21,7 +21,7 @@
 use crate::ch02_open_sum::*;
 
 /// Well that was easy.  (Not really!  Don't worry, we'll run into wrinkles.)
-pub trait Evaluate<V> {
+pub trait EvaluateAny<V> {
     fn evaluate(&self) -> V;
 }
 
@@ -29,16 +29,16 @@ pub trait Evaluate<V> {
 /// method.  (We'll have to explicitly call out which value type we want to use, and it's somewhat
 /// less verbose to do that on a function than trying to cast our Expr type to the right trait
 /// instantiation.)
-pub fn evaluate<V, E>(expr: &E) -> V
+pub fn evaluate_any<V, E>(expr: &E) -> V
 where
-    E: Evaluate<V>,
+    E: EvaluateAny<V>,
 {
     expr.evaluate()
 }
 
 /// Integer literals evaluate to their value.  We can lift them into any result type that can be
 /// constructed from an integer.
-impl<V> Evaluate<V> for IntegerLiteral
+impl<V> EvaluateAny<V> for IntegerLiteral
 where
     V: From<i64>,
 {
@@ -47,10 +47,10 @@ where
     }
 }
 
-impl<V, E> Evaluate<V> for Add<E>
+impl<V, E> EvaluateAny<V> for Add<E>
 where
     // We can only evaluate an addition if we know how to evaluate its subexpressions.
-    E: Evaluate<V>,
+    E: EvaluateAny<V>,
     // and if the result type can itself be added together!
     V: std::ops::Add<Output = V>,
 {
@@ -61,10 +61,10 @@ where
 
 /// We can evaluate a sum if we know how to evaluate both of its variants; we just delegate to the
 /// underlying type's impl.
-impl<V, L, R> Evaluate<V> for Sum<L, R>
+impl<V, L, R> EvaluateAny<V> for Sum<L, R>
 where
-    L: Evaluate<V>,
-    R: Evaluate<V>,
+    L: EvaluateAny<V>,
+    R: EvaluateAny<V>,
 {
     fn evaluate(&self) -> V {
         match self {
@@ -74,10 +74,10 @@ where
     }
 }
 
-/// Like before, we have to explicitly provide an Evaluate impl for our expression types.  The main
-/// wrinkle is that we **also** have to explicitly carry over any of the constraints that the
+/// Like before, we have to explicitly provide an EvaluateAny impl for our expression types.  The
+/// main wrinkle is that we **also** have to explicitly carry over any of the constraints that the
 /// individual terms require of the value type — Rust won't propagate those for us.
-impl<V> Evaluate<V> for Expr
+impl<V> EvaluateAny<V> for Expr
 where
     V: From<i64> + std::ops::Add<Output = V>,
 {
@@ -96,9 +96,9 @@ mod tests {
         // 118 + 1219
         let add: Expr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
-        assert_eq!((&add as &Evaluate<i64>).evaluate(), 1337);
+        assert_eq!((&add as &EvaluateAny<i64>).evaluate(), 1337);
         // A little bit nicer
-        assert_eq!(evaluate::<i64, _>(&add), 1337);
+        assert_eq!(evaluate_any::<i64, _>(&add), 1337);
     }
 
     #[test]
@@ -108,7 +108,7 @@ mod tests {
             integer_literal(30000),
             add(integer_literal(1330), integer_literal(7)),
         );
-        assert_eq!((&add as &Evaluate<i64>).evaluate(), 31337);
-        assert_eq!(evaluate::<i64, _>(&add), 31337);
+        assert_eq!((&add as &EvaluateAny<i64>).evaluate(), 31337);
+        assert_eq!(evaluate_any::<i64, _>(&add), 31337);
     }
 }

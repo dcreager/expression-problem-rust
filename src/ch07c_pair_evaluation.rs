@@ -22,9 +22,9 @@ use crate::ch07b_generic_evaluation::*;
 /// We have pairs in Rust, so we can use that when defining the result for a pair expression.  Just
 /// like integer literals, we can lift the Rust pairs into the result type as long as it has the
 /// right From impl.
-impl<V, E> Evaluate<V> for Pair<E>
+impl<V, E> EvaluateAny<V> for Pair<E>
 where
-    E: Evaluate<V>,
+    E: EvaluateAny<V>,
     V: From<(V, V)>,
 {
     fn evaluate(&self) -> V {
@@ -39,9 +39,9 @@ pub trait ProjectPair {
     fn second(self) -> Self;
 }
 
-impl<V, E> Evaluate<V> for First<E>
+impl<V, E> EvaluateAny<V> for First<E>
 where
-    E: Evaluate<V>,
+    E: EvaluateAny<V>,
     V: ProjectPair,
 {
     fn evaluate(&self) -> V {
@@ -49,9 +49,9 @@ where
     }
 }
 
-impl<V, E> Evaluate<V> for Second<E>
+impl<V, E> EvaluateAny<V> for Second<E>
 where
-    E: Evaluate<V>,
+    E: EvaluateAny<V>,
     V: ProjectPair,
 {
     fn evaluate(&self) -> V {
@@ -59,8 +59,8 @@ where
     }
 }
 
-/// And the Evaluate impl for our expression type needs to reference all of these constraints.
-impl<V> Evaluate<V> for PairExpr
+/// And the EvaluateAny impl for our expression type needs to reference all of these constraints.
+impl<V> EvaluateAny<V> for PairExpr
 where
     V: From<i64> + From<(V, V)> + std::ops::Add<Output = V> + ProjectPair,
 {
@@ -132,11 +132,11 @@ mod tests {
         let add: PairExpr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
         assert_eq!(
-            (&add as &Evaluate<IntOrPair>).evaluate(),
+            (&add as &EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(1337)
         );
         // A little bit nicer
-        assert_eq!(evaluate::<IntOrPair, _>(&add), IntOrPair::Int(1337));
+        assert_eq!(evaluate_any::<IntOrPair, _>(&add), IntOrPair::Int(1337));
     }
 
     #[test]
@@ -147,10 +147,10 @@ mod tests {
             add(integer_literal(1330), integer_literal(7)),
         );
         assert_eq!(
-            (&add as &Evaluate<IntOrPair>).evaluate(),
+            (&add as &EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(31337)
         );
-        assert_eq!(evaluate::<IntOrPair, _>(&add), IntOrPair::Int(31337));
+        assert_eq!(evaluate_any::<IntOrPair, _>(&add), IntOrPair::Int(31337));
     }
 
     // And we can also evaluate expressions that mention pairs.
@@ -159,11 +159,11 @@ mod tests {
     fn can_evaluate_pair() {
         let expr: PairExpr = pair(integer_literal(7), integer_literal(6));
         assert_eq!(
-            (&expr as &Evaluate<IntOrPair>).evaluate(),
+            (&expr as &EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Pair(Box::new(IntOrPair::Int(7)), Box::new(IntOrPair::Int(6)))
         );
         assert_eq!(
-            evaluate::<IntOrPair, _>(&expr),
+            evaluate_any::<IntOrPair, _>(&expr),
             IntOrPair::Pair(Box::new(IntOrPair::Int(7)), Box::new(IntOrPair::Int(6)))
         );
     }
@@ -172,10 +172,10 @@ mod tests {
     fn can_evaluate_pair_projection() {
         let expr: PairExpr = first(pair(integer_literal(7), integer_literal(6)));
         assert_eq!(
-            (&expr as &Evaluate<IntOrPair>).evaluate(),
+            (&expr as &EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(7)
         );
-        assert_eq!(evaluate::<IntOrPair, _>(&expr), IntOrPair::Int(7));
+        assert_eq!(evaluate_any::<IntOrPair, _>(&expr), IntOrPair::Int(7));
     }
 
     // But we'd better get the types right, or we'll panic!
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn cannot_project_integer() {
         let expr: PairExpr = first(integer_literal(7));
-        let result = std::panic::catch_unwind(|| (&expr as &Evaluate<IntOrPair>).evaluate());
+        let result = std::panic::catch_unwind(|| (&expr as &EvaluateAny<IntOrPair>).evaluate());
         assert!(result.is_err());
     }
 
@@ -193,7 +193,7 @@ mod tests {
             pair(integer_literal(1), integer_literal(2)),
             integer_literal(3),
         );
-        let result = std::panic::catch_unwind(|| (&expr as &Evaluate<IntOrPair>).evaluate());
+        let result = std::panic::catch_unwind(|| (&expr as &EvaluateAny<IntOrPair>).evaluate());
         assert!(result.is_err());
     }
 }

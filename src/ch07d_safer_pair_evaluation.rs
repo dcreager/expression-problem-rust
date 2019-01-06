@@ -89,12 +89,12 @@ mod tests {
         let add: PairExpr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
         assert_eq!(
-            (&add as &Evaluate<SafeIntOrPair>).evaluate(),
+            (&add as &EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(1337)).into()
         );
         // A little bit nicer
         assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&add),
+            evaluate_any::<SafeIntOrPair, _>(&add),
             Some(IntOrPair::Int(1337)).into()
         );
     }
@@ -107,11 +107,11 @@ mod tests {
             add(integer_literal(1330), integer_literal(7)),
         );
         assert_eq!(
-            (&add as &Evaluate<SafeIntOrPair>).evaluate(),
+            (&add as &EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(31337)).into()
         );
         assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&add),
+            evaluate_any::<SafeIntOrPair, _>(&add),
             Some(IntOrPair::Int(31337)).into()
         );
     }
@@ -120,7 +120,7 @@ mod tests {
     fn can_evaluate_pair() {
         let expr: PairExpr = pair(integer_literal(7), integer_literal(6));
         assert_eq!(
-            (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
+            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Pair(
                 Box::new(IntOrPair::Int(7)),
                 Box::new(IntOrPair::Int(6))
@@ -128,7 +128,7 @@ mod tests {
             .into()
         );
         assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&expr),
+            evaluate_any::<SafeIntOrPair, _>(&expr),
             Some(IntOrPair::Pair(
                 Box::new(IntOrPair::Int(7)),
                 Box::new(IntOrPair::Int(6))
@@ -141,11 +141,11 @@ mod tests {
     fn can_evaluate_pair_projection() {
         let expr: PairExpr = first(pair(integer_literal(7), integer_literal(6)));
         assert_eq!(
-            (&expr as &Evaluate<SafeIntOrPair>).evaluate(),
+            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(7)).into()
         );
         assert_eq!(
-            evaluate::<SafeIntOrPair, _>(&expr),
+            evaluate_any::<SafeIntOrPair, _>(&expr),
             Some(IntOrPair::Int(7)).into()
         );
     }
@@ -155,8 +155,11 @@ mod tests {
     #[test]
     fn cannot_project_integer() {
         let expr: PairExpr = first(integer_literal(7));
-        assert_eq!((&expr as &Evaluate<SafeIntOrPair>).evaluate(), None.into());
-        assert_eq!(evaluate::<SafeIntOrPair, _>(&expr), None.into());
+        assert_eq!(
+            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            None.into()
+        );
+        assert_eq!(evaluate_any::<SafeIntOrPair, _>(&expr), None.into());
     }
 
     #[test]
@@ -165,7 +168,10 @@ mod tests {
             pair(integer_literal(1), integer_literal(2)),
             integer_literal(3),
         );
-        assert_eq!((&expr as &Evaluate<SafeIntOrPair>).evaluate(), None.into());
-        assert_eq!(evaluate::<SafeIntOrPair, _>(&expr), None.into());
+        assert_eq!(
+            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            None.into()
+        );
+        assert_eq!(evaluate_any::<SafeIntOrPair, _>(&expr), None.into());
     }
 }
