@@ -81,10 +81,11 @@ writing new code, and not by editing any existing code.
 - [ch07a\_pairs](src/ch07a_pairs.rs): Let's add a new type of value to our
   language.
 
-- [ch07b\_generic\_evaluation](src/ch07b_generic_evaluation.rs): How could we
-  have done a better job of defining our evaluation rules from
-  [ch03\_evaluation][] — so that we could reuse them as-is with our new
-  pair-equipped language?
+- [ch07b\_generic\_evaluation][]: How could we have done a better job of
+  defining our evaluation rules from [ch03\_evaluation][] — so that we could
+  reuse them as-is with our new pair-equipped language?
+
+[ch07b\_generic\_evaluation]: src/ch07b_generic_evaluation.rs
 
 - [ch07c\_pair\_evaluation](src/ch07c_pair_evaluation.rs): And now we can add
   evaluation rules for pairs too!  And we can reuse the existing evaluation
@@ -96,3 +97,16 @@ writing new code, and not by editing any existing code.
   evaluate pairs again, without panicking when we encounter a type error.  No
   changes needed to the evaluation rules — we just need to use a value type that
   can encode errors!
+
+### Eliminating boilerplate
+
+- [ch08a\_expressions](src/ch08a_expressions.rs): This was all very fun, but it
+  required more boilerplate than we needed on the Haskell side.  Can we get rid
+  of it?  First let's create a Rust trait that lines up with the `Expr` type
+  family.  This will let us talk about expressions in any of our mini-languages
+  generically.
+
+- [ch08b\_open\_recursion\_evaluation](src/ch08b_open_recursion_evaluation.rs):
+  Blammo!  With a little tweak to how we do the recursion, we can update the
+  evaluation rules from [ch07b\_generic\_evaluation][] so that they work out of
+  the box for **any** type that implements `Expression`.
