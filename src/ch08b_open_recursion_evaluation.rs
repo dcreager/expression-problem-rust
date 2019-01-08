@@ -53,8 +53,8 @@ use crate::ch08a_expressions::*;
 // (If you've read Swierstra's paper deeply, what we've done here is fuse together each term type's
 // `fmap` and `evalAlgebra` functions into a single `eval` method.)
 
-//! Each term type should implement this trait to define how it should be evaluated.  If the term
-//! has any subexpressions, it should use `eval_subexpr` to evaluate them.
+/// Each term type should implement this trait to define how it should be evaluated.  If the term
+/// has any subexpressions, it should use `eval_subexpr` to evaluate them.
 pub trait Eval<V, E> {
     fn eval<F>(&self, eval_subexpr: F) -> V
     where
