@@ -96,7 +96,7 @@ mod tests {
         // 118 + 1219
         let add: Expr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
-        assert_eq!((&add as &EvaluateAny<i64>).evaluate(), 1337);
+        assert_eq!((&add as &dyn EvaluateAny<i64>).evaluate(), 1337);
         // A little bit nicer
         assert_eq!(evaluate_any::<i64, _>(&add), 1337);
     }
@@ -108,7 +108,7 @@ mod tests {
             integer_literal(30000),
             add(integer_literal(1330), integer_literal(7)),
         );
-        assert_eq!((&add as &EvaluateAny<i64>).evaluate(), 31337);
+        assert_eq!((&add as &dyn EvaluateAny<i64>).evaluate(), 31337);
         assert_eq!(evaluate_any::<i64, _>(&add), 31337);
     }
 }
