@@ -132,7 +132,7 @@ mod tests {
         let add: PairExpr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
         assert_eq!(
-            (&add as &EvaluateAny<IntOrPair>).evaluate(),
+            (&add as &dyn EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(1337)
         );
         // A little bit nicer
@@ -147,7 +147,7 @@ mod tests {
             add(integer_literal(1330), integer_literal(7)),
         );
         assert_eq!(
-            (&add as &EvaluateAny<IntOrPair>).evaluate(),
+            (&add as &dyn EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(31337)
         );
         assert_eq!(evaluate_any::<IntOrPair, _>(&add), IntOrPair::Int(31337));
@@ -159,7 +159,7 @@ mod tests {
     fn can_evaluate_pair() {
         let expr: PairExpr = pair(integer_literal(7), integer_literal(6));
         assert_eq!(
-            (&expr as &EvaluateAny<IntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Pair(Box::new(IntOrPair::Int(7)), Box::new(IntOrPair::Int(6)))
         );
         assert_eq!(
@@ -172,7 +172,7 @@ mod tests {
     fn can_evaluate_pair_projection() {
         let expr: PairExpr = first(pair(integer_literal(7), integer_literal(6)));
         assert_eq!(
-            (&expr as &EvaluateAny<IntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<IntOrPair>).evaluate(),
             IntOrPair::Int(7)
         );
         assert_eq!(evaluate_any::<IntOrPair, _>(&expr), IntOrPair::Int(7));
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn cannot_project_integer() {
         let expr: PairExpr = first(integer_literal(7));
-        let result = std::panic::catch_unwind(|| (&expr as &EvaluateAny<IntOrPair>).evaluate());
+        let result = std::panic::catch_unwind(|| (&expr as &dyn EvaluateAny<IntOrPair>).evaluate());
         assert!(result.is_err());
     }
 
@@ -193,7 +193,7 @@ mod tests {
             pair(integer_literal(1), integer_literal(2)),
             integer_literal(3),
         );
-        let result = std::panic::catch_unwind(|| (&expr as &EvaluateAny<IntOrPair>).evaluate());
+        let result = std::panic::catch_unwind(|| (&expr as &dyn EvaluateAny<IntOrPair>).evaluate());
         assert!(result.is_err());
     }
 }

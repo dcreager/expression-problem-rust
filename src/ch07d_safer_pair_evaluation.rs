@@ -89,7 +89,7 @@ mod tests {
         let add: PairExpr = add(integer_literal(118), integer_literal(1219));
         // Kind of gross
         assert_eq!(
-            (&add as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&add as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(1337)).into()
         );
         // A little bit nicer
@@ -107,7 +107,7 @@ mod tests {
             add(integer_literal(1330), integer_literal(7)),
         );
         assert_eq!(
-            (&add as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&add as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(31337)).into()
         );
         assert_eq!(
@@ -120,7 +120,7 @@ mod tests {
     fn can_evaluate_pair() {
         let expr: PairExpr = pair(integer_literal(7), integer_literal(6));
         assert_eq!(
-            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Pair(
                 Box::new(IntOrPair::Int(7)),
                 Box::new(IntOrPair::Int(6))
@@ -141,7 +141,7 @@ mod tests {
     fn can_evaluate_pair_projection() {
         let expr: PairExpr = first(pair(integer_literal(7), integer_literal(6)));
         assert_eq!(
-            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             Some(IntOrPair::Int(7)).into()
         );
         assert_eq!(
@@ -156,7 +156,7 @@ mod tests {
     fn cannot_project_integer() {
         let expr: PairExpr = first(integer_literal(7));
         assert_eq!(
-            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             None.into()
         );
         assert_eq!(evaluate_any::<SafeIntOrPair, _>(&expr), None.into());
@@ -169,7 +169,7 @@ mod tests {
             integer_literal(3),
         );
         assert_eq!(
-            (&expr as &EvaluateAny<SafeIntOrPair>).evaluate(),
+            (&expr as &dyn EvaluateAny<SafeIntOrPair>).evaluate(),
             None.into()
         );
         assert_eq!(evaluate_any::<SafeIntOrPair, _>(&expr), None.into());

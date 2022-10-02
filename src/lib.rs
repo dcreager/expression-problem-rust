@@ -13,7 +13,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------------------------------
 
-#![feature(optin_builtin_traits)]
+#![feature(auto_traits)]
+#![feature(negative_impls)]
 
 pub mod ch01a_before;
 pub mod ch01b_new_method;
